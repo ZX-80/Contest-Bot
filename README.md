@@ -32,7 +32,7 @@ This script was developed and tested on Windows, but likely works on other opera
   
 
   1. Download and install the latest version of Python3 from [Python Downloads Page](https://www.python.org/downloads/), making sure to follow the below instructions during installation.
-     - In the optional features menu, select **"pip"**, **"tcl/tk"**, and **"py launcher"**.
+     - In the optional features menu, select **"pip"**, **"tcl/tk"**, **"py launcher"**, and **"for all users"**.
      - In the advanced  options menu: select **"Create shortcuts"**, **"Add Python to environment variables"**, and **"Precompile standard library"**
    
      <p align = "center">
