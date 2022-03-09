@@ -104,9 +104,11 @@ class MainWindow(tk.Frame):
             self.set_selected_winners_text(f"ERROR: {str(e)}\nNOTE: Probably no text in clipboard")
             self.root.geometry(f"0x0")
             raise
-
+        
+        self.entry_url.configure(state="normal")
         self.entry_url.delete(0, tk.END)
         self.entry_url.insert(0, post_URL)
+        self.entry_url.configure(state="readonly")
 
         # Verify user entered a number
         amount = self.entry_winners.get()
