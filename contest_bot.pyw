@@ -78,7 +78,7 @@ class MainWindow(tk.Frame):
         deduplicated_comments = {comment.author : comment.body for comment in root_comments}
 
         # Select n winners
-        winners = random.sample(deduplicated_comments.keys(), min(len(deduplicated_comments), n))
+        winners = random.sample(list(deduplicated_comments.keys()), min(len(deduplicated_comments), n))
         winners.sort(key=lambda author: list(deduplicated_comments.keys()).index(author))
 
         # Store contest results in CSV file
@@ -112,7 +112,10 @@ class MainWindow(tk.Frame):
 
         # Verify user entered a number
         amount = self.entry_winners.get()
-        if amount.isdigit():
+        if amount.isdigit() and int(amount) == 0:
+            self.set_selected_winners_text(f"ERROR: Winners must be more than 0")
+            self.root.geometry("0x0")
+        elif amount.isdigit():
             self.set_selected_winners_text("Processing...")
 
             try:
@@ -121,8 +124,11 @@ class MainWindow(tk.Frame):
                 self.set_selected_winners_text(f"ERROR: {str(e)}")
                 self.root.geometry(f"0x0")
                 raise
-
-            self.set_selected_winners_text(f"And the winners are:\n" + '\n'.join(winners))
+             
+            if len(winners) == 1:
+                self.set_selected_winners_text(f"And the winner is:\n{winners[0]}")
+            else:
+                self.set_selected_winners_text(f"And the winners are:\n" + '\n'.join(winners))
             window_size = self.calculate_window_size(min(10, len(winners)) + 1) # Show up to 10 winners at once
             self.root.geometry(f"0x{window_size[1]}")
         else:
