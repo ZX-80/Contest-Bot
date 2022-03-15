@@ -14,10 +14,11 @@ from logging.handlers import RotatingFileHandler
 
 
 class MainWindow(tk.Frame):
-    def __init__(self, root, reddit):
+    def __init__(self, root, reddit, blacklist):
         super().__init__(root)
         self.root = root
         self.reddit = reddit
+        self.blacklist = blacklist
 
         self.root.title("Contest Bot v1.2")
         self.root.columnconfigure(1, weight=1)
@@ -75,6 +76,7 @@ class MainWindow(tk.Frame):
         submission.comments.replace_more(limit=None, threshold=1)
         root_comments = list(submission.comments)
         root_comments.sort(key=lambda comment: comment.created_utc) # Only take the latest root comment from an author
+        root_comments = filter(lambda comment: comment.author not in self.blacklist, root_comments)
         deduplicated_comments = {comment.author : comment.body for comment in root_comments}
 
         # Select n winners
@@ -149,7 +151,7 @@ if __name__ == "__main__":
 
     try:
         # Initialize PRAW
-        config = configparser.ConfigParser()
+        config = configparser.ConfigParser(allow_no_value=True)
         config.read("account.ini")
         reddit = praw.Reddit(
             client_id=config["ACCOUNT INFO"]["client id"],
@@ -158,6 +160,7 @@ if __name__ == "__main__":
             user_agent="contest_bot/v1.2",
             username=config["ACCOUNT INFO"]["username"],
         )
+        blacklist = list(config["BLACKLIST"])
 
         # Capture all Tk errors
         class FaultTolerantTk(tk.Tk):
@@ -166,7 +169,7 @@ if __name__ == "__main__":
 
         # Initialize window
         root = FaultTolerantTk()
-        app = MainWindow(root, reddit)
+        app = MainWindow(root, reddit, blacklist)
         app.mainloop()
     except Exception as e:
         logger.exception("Critical error occured in main.")
