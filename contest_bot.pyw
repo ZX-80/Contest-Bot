@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""Select winners from top level comments in a Reddit post"""
+
 import csv
 import praw
 import string
@@ -15,6 +20,17 @@ from logging.handlers import RotatingFileHandler
 
 class MainWindow(tk.Frame):
     def __init__(self, root, reddit, blacklist):
+        """Initialize the window and construct its widgets.
+
+        Parameters
+        ----------
+        root : Tk instance
+            This is a wrapper around a Tcl interpreter.
+        reddit : Reddit instance
+            This is used to access the Reddit API.
+        blacklist : list of str
+            A list of usernames to never select as winners
+        """
         super().__init__(root)
         self.root = root
         self.reddit = reddit
@@ -58,12 +74,34 @@ class MainWindow(tk.Frame):
         self.root.minsize(*self.calculate_window_size(3))
         self.root.geometry("0x0")
 
-    def calculate_window_size(self, text_box_lines):
+    def calculate_window_size(self, viewable_lines):
+        """
+        Calculate the window size necessary to view n lines in the output
+        textbox.
+
+        Parameters
+        ----------
+        viewable_lines : int
+            This is the amount of lines required to be viewable in the output
+            textbox.
+
+        Returns
+        -------
+        tuple of ints
+            The new width and height to be passed to self.root.geometry.
+        """
         selected_winners_y_offset = self.selected_winners.winfo_rooty() - self.root.winfo_rooty() + self.vertical_padding + 4
         font_height = tkf.Font(font=self.selected_winners["font"]).metrics("linespace")
-        return (400, selected_winners_y_offset + text_box_lines * font_height)
+        return (400, selected_winners_y_offset + viewable_lines * font_height)
 
     def set_selected_winners_text(self, text):
+        """Sets the output textbox text.
+
+        Parameters
+        ----------
+        text : string
+            This is the new text for the output textbox.
+        """
         self.selected_winners.configure(state="normal")
         self.selected_winners.delete("1.0", tk.END)
         self.selected_winners.insert("1.0", text)
@@ -71,6 +109,25 @@ class MainWindow(tk.Frame):
         self.selected_winners.update()
 
     def get_winners(self, post_URL, n):
+        """
+        Select winners from a reddit post, based only on the top level
+        comments, removing any duplications or blacklisted users. The 
+        results are saved in a csv file.
+
+        Parameters
+        ----------
+        post_URL : string
+            This is the URL of the contest, which is expected to be a Reddit
+            post.
+        n : int
+            The amount of winners to select without replacement.
+
+        Returns
+        -------
+        list of strings
+            Each string represents a line in the output with the format
+            "comment index) username".
+        """
         # Get all root comments from URL
         submission = reddit.submission(url=post_URL)
         submission.comments.replace_more(limit=None, threshold=1)
@@ -99,7 +156,9 @@ class MainWindow(tk.Frame):
         return [str(list(deduplicated_comments.keys()).index(author)) + ") " + str(author) for i, author in enumerate(winners)]
 
     def run(self):
-        # Get post URL from clipboard
+        """
+        Sanitize user input and pass it to get_winners
+        """
         try:
             post_URL = root.selection_get(selection="CLIPBOARD")
         except tk.TclError as e:
@@ -138,7 +197,6 @@ class MainWindow(tk.Frame):
             self.root.geometry("0x0")
 
 if __name__ == "__main__":
-
     # Initialize logging
     logging.basicConfig(level=logging.NOTSET)
     logs_path = Path(__file__).parent.resolve() / "Logs"
@@ -162,12 +220,10 @@ if __name__ == "__main__":
         )
         blacklist = list(config["BLACKLIST"])
 
-        # Capture all Tk errors
         class FaultTolerantTk(tk.Tk):
             def report_callback_exception(self, exc, val, tb):
                 logger.exception("Critical error occured in Tk.")
 
-        # Initialize window
         root = FaultTolerantTk()
         app = MainWindow(root, reddit, blacklist)
         app.mainloop()
